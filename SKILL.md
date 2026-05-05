@@ -1,13 +1,12 @@
 ---
 name: audit
-description: Run a full 10-phase codebase audit — static analysis, dependency scan, test coverage & verification, architecture & decomposition, defensive programming, runtime risks, naming & clarity, code review readiness — then produce a prioritized report, fix easy issues directly, and file GitHub issues for larger work. Informed by Code Complete 2 principles adapted for agentic coding. Use when the user says "run audit", "audit the codebase", or "check code quality".
+description: Run a full 10-phase codebase audit — static analysis, dependency scan, test coverage & verification, architecture & decomposition, defensive programming, runtime risks, naming & clarity, code review readiness — then produce a prioritized report, fix easy issues directly, and list remaining work as a checklist. Informed by Code Complete 2 principles adapted for agentic coding. Use when the user says "run audit", "audit the codebase", or "check code quality".
 argument-hint: "[--skip-tools] [--phase N]"
-composable-deps: gh-query, gh-issues, gh-labels
 ---
 
 # Codebase Audit — CC2 Principles for Clean AI Coding
 
-Execute an audit of the current project. Phases 1–8 are analysis only. Phase 9 produces the report. Phase 10 takes action: fix easy issues directly, file GitHub issues for the rest.
+Execute an audit of the current project. Phases 1–8 are analysis only. Phase 9 produces the report. Phase 10 takes action: fix easy issues directly, list remaining work in the report.
 
 **Optional arguments:**
 - `--skip-tools` — Skip external tool phases (1–3) and run only code analysis phases (4–8).
@@ -247,37 +246,39 @@ If Phase 8 step 3 found any markers, include them as a separate table at the end
 
 ---
 
-## Phase 10 — Fix or File
+## Phase 10 — Fix or Report
 
 After producing the report, triage each finding:
 
 ### Fix directly (easy wins)
 For findings that can be resolved quickly and safely — one-line fixes, adding a missing `timeout=`, removing an unused import, adding a type annotation — **fix them immediately**. Commit the fixes with a clear message referencing the audit finding number.
 
-### File as GitHub issues (larger work)
-For findings that require significant refactoring, architectural changes, or non-trivial effort, create GitHub issues. Follow `gh-query` for repo detection and Windows safety (`MSYS_NO_PATHCONV`), and `gh-issues` for duplicate checking before creation.
+### Report remaining work
+For findings that require significant refactoring, architectural changes, or non-trivial effort, add them to a **Remaining Work** section at the end of the audit report. Group by priority:
 
-Before creating issues, check for duplicates using `gh-issues` Section F. Then ensure labels exist using `gh-labels` Section C, and create:
+```
+### Remaining Work
 
-```bash
-MSYS_NO_PATHCONV=1 gh issue create --repo <repo> \
-  --title "<short description>" \
-  --label "<category>,<difficulty>" \
-  --body "<details including audit finding number and recommended fix>"
+#### Must fix (CRITICAL/WARNING that couldn't be auto-fixed)
+- [ ] #3 — DEPS: Upgrade `requests` to fix CVE-2024-XXXX
+- [ ] #7 — ARCH: Split `utils.py` (450 lines) into focused modules
+
+#### Should fix (WARNING, non-urgent)
+- [ ] #12 — DEFENSE: Add error boundaries to async handlers in `api.py`
+- [ ] #15 — RUNTIME: Add timeout to HTTP calls in `client.py`
+
+#### Nice to have (SUGGESTION)
+- [ ] #20 — NAMING: Add docstrings to public functions in `core.py`
 ```
 
-**Category labels:** `code-quality`, `security`, `testing`, `architecture`, `documentation`
-**Difficulty labels:**
-- `Easy` — config change, small refactor, add a type annotation
-- `Medium` — requires refactoring a function, adding tests, restructuring a module
-- `Hard` — architectural change, significant redesign, cross-cutting concern
+Each item includes the finding number, category tag, and a short description of what needs to be done. This gives a clear, actionable checklist without requiring any external tooling.
 
 ### Triage rules
-1. **CRITICAL findings:** Fix immediately if easy. File an issue for anything non-trivial — these should not wait.
-2. **WARNING findings:** Fix if it takes less than a few minutes. Otherwise file an issue.
-3. **SUGGESTION findings:** Fix if trivial (e.g., removing commented-out code). Otherwise skip — only file an issue if the user explicitly requests it.
+1. **CRITICAL findings:** Fix immediately if easy. List in "Must fix" for anything non-trivial — these should not wait.
+2. **WARNING findings:** Fix if it takes less than a few minutes. Otherwise list in "Should fix" or "Must fix" depending on urgency.
+3. **SUGGESTION findings:** Fix if trivial (e.g., removing commented-out code). Otherwise list in "Nice to have" only if the user explicitly requests it.
 
-After all fixes and issues are created, report what was fixed and link all created issues.
+After all fixes, report what was fixed and present the remaining work checklist.
 
 ---
 
