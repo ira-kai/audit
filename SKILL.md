@@ -250,29 +250,42 @@ If Phase 8 step 3 found any markers, include them as a separate table at the end
 
 After producing the report, fix all findings directly. Work through them in three passes by severity. **Between each pass, tell the user which severity level you just finished and which you're starting next** so they can follow along.
 
+### Safety rules — do not break working code
+
+Before starting fixes, establish a safety baseline:
+
+1. **Baseline tests:** If the project has tests, run them first and record the pass/fail state. This is the baseline. If tests already fail before your changes, note which ones — you are not responsible for pre-existing failures.
+2. **After each pass:** Re-run the test suite. If any test that was passing before now fails, **immediately revert** the change that broke it using `git checkout -- <file>`, then re-apply a safer version of the fix or skip it. Never leave the codebase in a worse state than you found it.
+3. **No-test projects:** If the project has no tests, be conservative with structural changes:
+   - **Safe:** Adding type hints, docstrings, removing unused imports, extracting constants, adding `timeout=` params, fixing bare excepts.
+   - **Careful:** Renaming variables/functions — search all usages first and rename everywhere atomically. Verify no dynamic access (`getattr`, `**kwargs` unpacking) depends on the old name.
+   - **Ask first:** Splitting files, decomposing classes, moving functions between modules, changing function signatures. Tell the user what you want to do and why, and get confirmation before proceeding.
+4. **Import safety:** When splitting files or moving code, always update all import statements across the project. After moving code, grep for the old import path to confirm nothing was missed.
+5. **One finding at a time:** Fix each finding individually and verify before moving to the next. Do not batch unrelated changes — if something breaks, you need to know exactly which fix caused it.
+
 ### Pass 1 — CRITICAL findings
 Tell the user: "Fixing CRITICAL issues first."
 
 Fix every CRITICAL finding. These are security vulnerabilities, production failures, and data loss risks — they all get fixed now. This includes dependency upgrades, secret removal, missing error boundaries on destructive operations, and anything else tagged CRITICAL.
 
-When done, tell the user how many CRITICAL findings were fixed and commit the changes.
+When done, run tests (if they exist), tell the user how many CRITICAL findings were fixed, and commit the changes.
 
 ### Pass 2 — WARNING findings
 Tell the user: "Moving on to WARNING-level issues."
 
-Fix every WARNING finding. These are tech debt items that cause bugs or block future work — long functions that need splitting, god objects that need decomposing, missing timeouts, swallowed errors, coupling issues, etc. For larger refactors (splitting files, restructuring modules), do the work — don't just note it.
+Fix every WARNING finding. These are tech debt items that cause bugs or block future work — long functions that need splitting, god objects that need decomposing, missing timeouts, swallowed errors, coupling issues, etc. For larger refactors (splitting files, restructuring modules), do the work — but follow the safety rules above.
 
-When done, tell the user how many WARNING findings were fixed and commit the changes.
+When done, run tests (if they exist), tell the user how many WARNING findings were fixed, and commit the changes.
 
 ### Pass 3 — SUGGESTION findings
 Tell the user: "Now cleaning up SUGGESTION-level items."
 
 Fix every SUGGESTION finding. These are readability and best-practice improvements — adding type hints, docstrings, renaming ambiguous variables, removing commented-out code, extracting magic numbers to constants, etc.
 
-When done, tell the user how many SUGGESTION findings were fixed and commit the changes.
+When done, run tests (if they exist), tell the user how many SUGGESTION findings were fixed, and commit the changes.
 
 ### After all passes
-Report a final summary: total findings fixed per severity, total commits made, and any findings that genuinely could not be fixed (with an explanation of why — not just "it's hard").
+Report a final summary: total findings fixed per severity, total commits made, and any findings that were skipped to protect working code (with an explanation of why and what the user could do manually).
 
 ---
 
