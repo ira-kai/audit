@@ -1,12 +1,12 @@
 ---
 name: audit
-description: Run a full 10-phase codebase audit — static analysis, dependency scan, test coverage & verification, architecture & decomposition, defensive programming, runtime risks, naming & clarity, code review readiness — then produce a prioritized report, fix easy issues directly, and list remaining work as a checklist. Informed by Code Complete 2 principles adapted for agentic coding. Use when the user says "run audit", "audit the codebase", or "check code quality".
+description: Run a full 10-phase codebase audit — static analysis, dependency scan, test coverage & verification, architecture & decomposition, defensive programming, runtime risks, naming & clarity, code review readiness — then produce a prioritized report and fix all issues directly (CRITICAL first, then WARNING, then SUGGESTION). Informed by Code Complete 2 principles adapted for agentic coding. Use when the user says "run audit", "audit the codebase", or "check code quality".
 argument-hint: "[--skip-tools] [--phase N]"
 ---
 
 # Codebase Audit — CC2 Principles for Clean AI Coding
 
-Execute an audit of the current project. Phases 1–8 are analysis only. Phase 9 produces the report. Phase 10 takes action: fix easy issues directly, list remaining work in the report.
+Execute an audit of the current project. Phases 1–8 are analysis only. Phase 9 produces the report. Phase 10 fixes all issues directly — CRITICAL first, then WARNING, then SUGGESTION — committing after each pass.
 
 **Optional arguments:**
 - `--skip-tools` — Skip external tool phases (1–3) and run only code analysis phases (4–8).
@@ -246,39 +246,33 @@ If Phase 8 step 3 found any markers, include them as a separate table at the end
 
 ---
 
-## Phase 10 — Fix or Report
+## Phase 10 — Fix Everything
 
-After producing the report, triage each finding:
+After producing the report, fix all findings directly. Work through them in three passes by severity. **Between each pass, tell the user which severity level you just finished and which you're starting next** so they can follow along.
 
-### Fix directly (easy wins)
-For findings that can be resolved quickly and safely — one-line fixes, adding a missing `timeout=`, removing an unused import, adding a type annotation — **fix them immediately**. Commit the fixes with a clear message referencing the audit finding number.
+### Pass 1 — CRITICAL findings
+Tell the user: "Fixing CRITICAL issues first."
 
-### Report remaining work
-For findings that require significant refactoring, architectural changes, or non-trivial effort, add them to a **Remaining Work** section at the end of the audit report. Group by priority:
+Fix every CRITICAL finding. These are security vulnerabilities, production failures, and data loss risks — they all get fixed now. This includes dependency upgrades, secret removal, missing error boundaries on destructive operations, and anything else tagged CRITICAL.
 
-```
-### Remaining Work
+When done, tell the user how many CRITICAL findings were fixed and commit the changes.
 
-#### Must fix (CRITICAL/WARNING that couldn't be auto-fixed)
-- [ ] #3 — DEPS: Upgrade `requests` to fix CVE-2024-XXXX
-- [ ] #7 — ARCH: Split `utils.py` (450 lines) into focused modules
+### Pass 2 — WARNING findings
+Tell the user: "Moving on to WARNING-level issues."
 
-#### Should fix (WARNING, non-urgent)
-- [ ] #12 — DEFENSE: Add error boundaries to async handlers in `api.py`
-- [ ] #15 — RUNTIME: Add timeout to HTTP calls in `client.py`
+Fix every WARNING finding. These are tech debt items that cause bugs or block future work — long functions that need splitting, god objects that need decomposing, missing timeouts, swallowed errors, coupling issues, etc. For larger refactors (splitting files, restructuring modules), do the work — don't just note it.
 
-#### Nice to have (SUGGESTION)
-- [ ] #20 — NAMING: Add docstrings to public functions in `core.py`
-```
+When done, tell the user how many WARNING findings were fixed and commit the changes.
 
-Each item includes the finding number, category tag, and a short description of what needs to be done. This gives a clear, actionable checklist without requiring any external tooling.
+### Pass 3 — SUGGESTION findings
+Tell the user: "Now cleaning up SUGGESTION-level items."
 
-### Triage rules
-1. **CRITICAL findings:** Fix immediately if easy. List in "Must fix" for anything non-trivial — these should not wait.
-2. **WARNING findings:** Fix if it takes less than a few minutes. Otherwise list in "Should fix" or "Must fix" depending on urgency.
-3. **SUGGESTION findings:** Fix if trivial (e.g., removing commented-out code). Otherwise list in "Nice to have" only if the user explicitly requests it.
+Fix every SUGGESTION finding. These are readability and best-practice improvements — adding type hints, docstrings, renaming ambiguous variables, removing commented-out code, extracting magic numbers to constants, etc.
 
-After all fixes, report what was fixed and present the remaining work checklist.
+When done, tell the user how many SUGGESTION findings were fixed and commit the changes.
+
+### After all passes
+Report a final summary: total findings fixed per severity, total commits made, and any findings that genuinely could not be fixed (with an explanation of why — not just "it's hard").
 
 ---
 
